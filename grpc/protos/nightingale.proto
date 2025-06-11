@@ -23,9 +23,13 @@ package nightingale;
 
 // Interface exported by the server.
 service Nightingale {
-  rpc hello() return (HelloResponse) {}
+  rpc hello(HelloRequest) returns (HelloResponse) {}
+}
+
+message HelloRequest {
+  string name = 1;
 }
 
 message HelloResponse {
-  string name = 1;
+  string message = 1;
 }

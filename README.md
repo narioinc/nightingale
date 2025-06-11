@@ -20,7 +20,7 @@ The project is laid out in the following manner
 * grpc folder - this folder contains the grpc server based on grpc-node
 * root - everythign needed to run this as a docker container if need be
 
-# Server default
+# Server defaults
 
 ## http server
 
