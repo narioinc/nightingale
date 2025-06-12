@@ -1,11 +1,13 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var healthRouter = require('./routes/health');
+var clientRouter = require('./routes/client');
+var deviceRouter = require('./routes/device');
+const bluetooth = require('webbluetooth').bluetooth;
 
 var app = express();
 
@@ -15,6 +17,10 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/', indexRouter);
 app.use('/health', healthRouter);
+app.use('/client', clientRouter);
+app.use('/device', deviceRouter);
+app.set('ble', bluetooth);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
