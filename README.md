@@ -18,6 +18,7 @@ The project is laid out in the following manner
 
 * http folder - this folder contains the http server based on express
 * grpc folder - this folder contains the grpc server based on grpc-node
+* esp32-fw - firmware for a sample BLE GATT server sending out mock heart rate on a standard charcateristics + other configurable goodies
 * root - everythign needed to run this as a docker container if need be
 
 # Server defaults
