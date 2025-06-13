@@ -1,3 +1,8 @@
+/*
+    Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleServer.cpp
+    Ported to Arduino ESP32 by Evandro Copercini
+    updates by chegewara
+*/
 
 #include <BLEDevice.h>
 #include <BLEUtils.h>
@@ -36,7 +41,7 @@ void setup() {
   Serial.println("Starting BLE work!");
 
   
-  BLEDevice::init("Long name works now");
+  BLEDevice::init("Nightingale");
   pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
@@ -48,7 +53,7 @@ void setup() {
 
   //notify charcateristic
   pNotifyCharacteristic = pService->createCharacteristic(
-    CHARACTERISTIC_UUID,
+    NOTIFY_CHARACTERISTIC_UUID,
     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE
   );
 
