@@ -11,6 +11,9 @@ var connectionMap = {};
 //saves the gatt server map against a unique device id
 var gattServerMap = {};
 
+//saves the characteristics that have been registered for notifications
+var characteristicNotificationMap = {};
+
 var deviceController = {}
 
 deviceController.getDevice = async function(req) {
@@ -250,6 +253,8 @@ deviceController.registerCharacteristicsNotifier =  async function(req) {
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
 
+    console.log(`Session ID: ${sessionId}, Service ID: ${serviceId}, Characteristic ID: ${characteristicId}`);
+
     if (!connectionMap[sessionId]) {
         return { "status": 404, "error": "Session not found" };
     }
@@ -272,14 +277,35 @@ deviceController.registerCharacteristicsNotifier =  async function(req) {
         
         // Start listening for notifications
         characteristic.startNotifications().then(() => {
+            characteristicNotificationMap[eventId] = characteristic;
             characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                console.log("Notification received for characteristic: " + event.value);
                 notifyEmitter.emit(eventId, event.value);
             });
         });
+        return { "status": 200, "result": "Characteristic subscribed successfully" };
 
     } catch (error) {
         console.error(`Failed to connect to device or get service/characteristic: ${error}`);
         return { "status": 500, "error": "Failed to connect to the Bluetooth device or get service/characteristic" };
+    }
+}
+
+deviceController.unregisterCharacteristicsNotifier = async function(req) {
+    const sessionId = req.params.sessionId;
+    const serviceId = req.params.serviceId;
+    const characteristicId = req.params.characteristicId;
+    const eventId = serviceId + "_" + characteristicId;
+    if(!characteristicNotificationMap[eventId]) {
+        return { "status": 404, "error": "No notifications registered for this characteristic" };
+    }else{
+        console.log(`Unregistering notifier for characteristic: ${characteristicId}`);
+        var characteristic = characteristicNotificationMap[eventId];
+        // TBD - check if characteristic is still connected
+        // If the current session has a active registered subscription, then only drop that listener
+    }
+    if (!connectionMap[sessionId]) {
+        return { "status": 404, "error": "Session not found" };
     }
 }
 

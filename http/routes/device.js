@@ -72,7 +72,7 @@ router.put("/gattserver/:sessionId/service/:serviceId/characteristic/:characteri
 
 router.get("/gattserver/:sessionId/service/:serviceId/characteristic/:characteristicId/notify", async function (req, res, next) {
   var result = await deviceController.registerCharacteristicsNotifier(req);
-
+  console.log(result);
   if(result.status === 400){
     res.status(result.status).json(result);
     return;
@@ -87,7 +87,7 @@ router.get("/gattserver/:sessionId/service/:serviceId/characteristic/:characteri
   res.setHeader('Connection', 'keep-alive');
 
   // Send an initial message
-  res.write(`data: Subscribed to characteristic `+ characteristicId +`:\n\n`);
+  res.write(`data: Subscribed to characteristic: `+ characteristicId +`\n\n`);
 
   bleNotifyEmitter = req.app.get('bleNotifyEmitter');
   bleNotifyEmitter.on(eventId, (data) => {
