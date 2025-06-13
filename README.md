@@ -1,4 +1,4 @@
-
+![nightingale](https://github.com/narioinc/nightingale/blob/9b7cac3fd2d2549d0508b26e8918158cf727763c/assets/nightingale.png)
 
 # Nightingale
 A HTTP/gRPC server to proxy to BLE devices. For use with frameworks that do not have a native BLE stack
