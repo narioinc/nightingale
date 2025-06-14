@@ -49,7 +49,7 @@ void setup() {
   pCharacteristic =
     pService->createCharacteristic(CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
   pCharacteristic->setValue("Hello World says Nightingale");
-  
+
 
   //notify charcateristic
   pNotifyCharacteristic = pService->createCharacteristic(
