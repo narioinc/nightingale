@@ -1,8 +1,9 @@
 const webbluetooth = require('webbluetooth')
 const { v4: uuidv4 } = require('uuid');
 const EventEmitter = require('events');
+const utils = require('./utils');
 
-class BLENotifyEmitter extends EventEmitter {}
+class BLENotifyEmitter extends EventEmitter { }
 
 
 // saves the connection map of all active sessions requested by users
@@ -16,19 +17,19 @@ var characteristicNotificationMap = {};
 
 var deviceController = {}
 
-deviceController.getDevice = async function(req) {
+deviceController.getDevice = async function (req) {
     const scanTime = req.body.scanTime ? req.body.scanTime / 1000 : 0.5; // Default scan time is 5000ms if not provided
     const bluetooth = new webbluetooth.Bluetooth({ scanTime });
-    
-      const devices = await bluetooth.getDevices();
-      console.log(devices);
-      if (!devices || devices.length === 0) {
+
+    const devices = await bluetooth.getDevices();
+    console.log(devices);
+    if (!devices || devices.length === 0) {
         return { "status": "404", "error": "No Bluetooth devices found" };
-      }
-      return { "status": 200, "res": devices };
+    }
+    return { "status": 200, "res": devices };
 }
 
-deviceController.requestDevice = async function(req) {
+deviceController.requestDevice = async function (req) {
     const scanTime = req.body.scanTime ? req.body.scanTime / 1000 : 0.5; // Default scan time is 5000ms if not provided
     const bleRequest = req.body.bleRequest ? req.body.bleRequest : { acceptAllDevices: true }; // Default empty filter
 
@@ -61,7 +62,7 @@ deviceController.requestDevice = async function(req) {
  * GATT services
  ************************************/
 
-deviceController.getGattServerServices = async function(req) {
+deviceController.getGattServerServices = async function (req) {
     const sessionId = req.params.sessionId;
     if (!connectionMap[sessionId]) {
         return { "status": 404, "error": "Session not found" };
@@ -86,8 +87,8 @@ deviceController.getGattServerServices = async function(req) {
 /****************************************
  * GATT Characteristics
  ****************************************/
- 
-deviceController.getGattServerServiceCharacteristics = async function(req) {
+
+deviceController.getGattServerServiceCharacteristics = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     if (!connectionMap[sessionId]) {
@@ -112,10 +113,11 @@ deviceController.getGattServerServiceCharacteristics = async function(req) {
     }
 }
 
-deviceController.getGattServerCharacteristicValue = async function(req) { 
+deviceController.getGattServerCharacteristicValue = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
+    const type = req.body.type ? req.body.type : "number"; // Default type is number
 
     console.log(`Session ID: ${sessionId}, Service ID: ${serviceId}, Characteristic ID: ${characteristicId}`);
 
@@ -129,8 +131,9 @@ deviceController.getGattServerCharacteristicValue = async function(req) {
         var service = await server.getPrimaryService(serviceId);
         var characteristic = await service.getCharacteristic(characteristicId);
         var datavalue = await characteristic.readValue();
-        const decoder = new TextDecoder();
-        const value = decoder.decode(datavalue);
+        
+        var value = utils.getDataFromDataView(datavalue, type);
+        //const value = datavalue.buffer ? new Uint8Array(datavalue.buffer) : datavalue;
         return { "status": 200, "res": value };
     } catch (error) {
         console.error(`Failed to connect to device or get service/characteristic: ${error}`);
@@ -138,7 +141,7 @@ deviceController.getGattServerCharacteristicValue = async function(req) {
     }
 }
 
-deviceController.writeGattServerCharacteristicValue = async function(req) {
+deviceController.writeGattServerCharacteristicValue = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
@@ -153,7 +156,7 @@ deviceController.writeGattServerCharacteristicValue = async function(req) {
     try {
         var service = await server.getPrimaryService(serviceId);
         var characteristic = await service.getCharacteristic(characteristicId);
-        if(!characteristic.properties.write) {
+        if (!characteristic.properties.write) {
             return { "status": 400, "error": "Characteristic does not support writing" };
         }
         await characteristic.writeValue(value);
@@ -169,8 +172,8 @@ deviceController.writeGattServerCharacteristicValue = async function(req) {
 /*************************************
  * GATT Characteristic Descriptors
  * ***********************************/
- 
-deviceController.getGattServerCharacteristicDescriptors = async function(req) {
+
+deviceController.getGattServerCharacteristicDescriptors = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
@@ -197,9 +200,9 @@ deviceController.getGattServerCharacteristicDescriptors = async function(req) {
     }
 }
 
-     
 
-deviceController.getGattServerCharacteristicDescriptorValue = async function(req) {
+
+deviceController.getGattServerCharacteristicDescriptorValue = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
@@ -223,10 +226,10 @@ deviceController.getGattServerCharacteristicDescriptorValue = async function(req
     }
 }
 
-deviceController.writeGattServerCharacteristicDescriptorValue = async function(req) {
+deviceController.writeGattServerCharacteristicDescriptorValue = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
-    const characteristicId = req.params.characteristicId;       
+    const characteristicId = req.params.characteristicId;
     const descriptorId = req.params.descriptorId;
     const value = req.body.value; // Expecting a Uint8Array or similar
     if (!connectionMap[sessionId]) {
@@ -248,10 +251,11 @@ deviceController.writeGattServerCharacteristicDescriptorValue = async function(r
     }
 }
 
-deviceController.registerCharacteristicsNotifier =  async function(req) {
+deviceController.registerCharacteristicsNotifier = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
+    const type = req.body.type ? req.body.type : "number"; // Expecting a Uint8Array or similar 
 
     console.log(`Session ID: ${sessionId}, Service ID: ${serviceId}, Characteristic ID: ${characteristicId}`);
 
@@ -262,26 +266,33 @@ deviceController.registerCharacteristicsNotifier =  async function(req) {
     const server = gattServerMap[deviceId];
     const eventId = serviceId + "_" + characteristicId;
 
+
+
     try {
         var service = await server.getPrimaryService(serviceId);
         var characteristic = await service.getCharacteristic(characteristicId);
 
-        if(characteristic.properties.notify === false) {
+        if (characteristic.properties.notify === false) {
             return { "status": 400, "error": "Characteristic does not support notifications" };
-        }else{
+        } else {
             console.log(`Registering notifier for characteristic: ${characteristic.uuid}`);
         }
-        
+
         // Create a new emitter for notifications
         const notifyEmitter = req.app.get('bleNotifyEmitter');
-        
+
         // Start listening for notifications
         characteristic.startNotifications().then(() => {
-            characteristicNotificationMap[eventId] = characteristic;
-            characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                console.log("Notification received for characteristic: " + event.value);
-                notifyEmitter.emit(eventId, event.value);
-            });
+            const characteristicUpdateHandler = {
+                handleEvent: function (event) {
+                    
+                    console.log("Notification received for characteristic: " + event.target.value);
+                    resultValue = utils.getDataFromDataView(event.target.value, type);
+                    notifyEmitter.emit(eventId, resultValue);
+                }
+            };
+            characteristicNotificationMap[sessionId] = characteristicUpdateHandler;
+            characteristic.addEventListener('characteristicvaluechanged', characteristicUpdateHandler)
         });
         return { "status": 200, "result": "Characteristic subscribed successfully" };
 
@@ -291,22 +302,40 @@ deviceController.registerCharacteristicsNotifier =  async function(req) {
     }
 }
 
-deviceController.unregisterCharacteristicsNotifier = async function(req) {
+deviceController.unregisterCharacteristicsNotifier = async function (req) {
     const sessionId = req.params.sessionId;
     const serviceId = req.params.serviceId;
     const characteristicId = req.params.characteristicId;
     const eventId = serviceId + "_" + characteristicId;
-    if(!characteristicNotificationMap[eventId]) {
-        return { "status": 404, "error": "No notifications registered for this characteristic" };
-    }else{
-        console.log(`Unregistering notifier for characteristic: ${characteristicId}`);
-        var characteristic = characteristicNotificationMap[eventId];
-        // TBD - check if characteristic is still connected
-        // If the current session has a active registered subscription, then only drop that listener
-    }
+
     if (!connectionMap[sessionId]) {
         return { "status": 404, "error": "Session not found" };
     }
+    const deviceId = connectionMap[sessionId];
+    const server = gattServerMap[deviceId];
+
+
+    if (!characteristicNotificationMap[sessionId]) {
+        return { "status": 404, "error": "No notifications registered for this characteristic during the session" };
+    } else {
+        console.log(`Unregistering notifier for characteristic: ${characteristicId}`);
+        var characteristicEventHandler = characteristicNotificationMap[sessionId];
+
+        try {
+            var service = await server.getPrimaryService(serviceId);
+            var characteristic = await service.getCharacteristic(characteristicId);
+            
+            //stop notificaitons and remove the event listener
+            await characteristic.stopNotifications();
+            characteristic.removeEventListener('characteristicvaluechanged', characteristicEventHandler);
+            delete characteristicNotificationMap[sessionId];
+            console.log(`Notifications for characteristic ${characteristicId} stopped successfully`);
+        } catch (error) {
+            console.error(`Failed to connect to device or get service/characteristic: ${error}`);
+            return { "status": 500, "error": "Failed to connect to the Bluetooth device or get service/characteristic" };
+        }
+
+    }
 }
 
-module.exports = deviceController;
+    module.exports = deviceController;

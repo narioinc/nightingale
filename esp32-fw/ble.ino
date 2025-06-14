@@ -48,8 +48,8 @@ void setup() {
   //simple string characteristic
   pCharacteristic =
     pService->createCharacteristic(CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
-  pCharacteristic->setValue("Hello World says Neil");
-
+  pCharacteristic->setValue("Hello World says Nightingale");
+  
 
   //notify charcateristic
   pNotifyCharacteristic = pService->createCharacteristic(
