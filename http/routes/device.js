@@ -102,7 +102,7 @@ router.get("/gattserver/:sessionId/service/:serviceId/characteristic/:characteri
   );
 
   // When client closes connection, stop sending events
-  req.on('close', () => {
+  res.on('close', () => {
     console.log("Client closed connection for characteristic: " + eventId);
     res.end();
     bleNotifyEmitter.removeAllListeners(eventId);
