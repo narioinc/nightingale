@@ -7,6 +7,8 @@ const deviceController = require('../controller/device');
 /******************************************
  * Devices
  ******************************************/
+
+
 router.get('/', async function (req, res, next) {
   var result = await deviceController.getDevice(req);
   if (result) {
@@ -25,9 +27,6 @@ router.get('/request', async function (req, res, next) {
     res.status(500).json({ "error": "Couldn't process request at this moment. Please retry later" });
   }
 });
-
-
-
 
 
 /******************************************

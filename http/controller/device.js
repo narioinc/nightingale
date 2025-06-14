@@ -131,7 +131,7 @@ deviceController.getGattServerCharacteristicValue = async function (req) {
         var service = await server.getPrimaryService(serviceId);
         var characteristic = await service.getCharacteristic(characteristicId);
         var datavalue = await characteristic.readValue();
-        
+
         var value = utils.getDataFromDataView(datavalue, type);
         //const value = datavalue.buffer ? new Uint8Array(datavalue.buffer) : datavalue;
         return { "status": 200, "res": value };
@@ -266,6 +266,11 @@ deviceController.registerCharacteristicsNotifier = async function (req) {
     const server = gattServerMap[deviceId];
     const eventId = serviceId + "_" + characteristicId;
 
+    const updateHandler = characteristicNotificationMap[sessionId];
+    if (updateHandler) {
+        return { "status": 400, "error": "Notifications already registered for this characteristic during the session" };
+    }
+
 
 
     try {
@@ -283,16 +288,18 @@ deviceController.registerCharacteristicsNotifier = async function (req) {
 
         // Start listening for notifications
         characteristic.startNotifications().then(() => {
-            const characteristicUpdateHandler = {
+
+            const characteristicUpdateHandler = updateHandler ? updateHandler : {
                 handleEvent: function (event) {
-                    
+
                     console.log("Notification received for characteristic: " + event.target.value);
                     resultValue = utils.getDataFromDataView(event.target.value, type);
                     notifyEmitter.emit(eventId, resultValue);
                 }
             };
             characteristicNotificationMap[sessionId] = characteristicUpdateHandler;
-            characteristic.addEventListener('characteristicvaluechanged', characteristicUpdateHandler)
+            characteristic.addEventListener('characteristicvaluechanged', characteristicUpdateHandler);
+
         });
         return { "status": 200, "result": "Characteristic subscribed successfully" };
 
@@ -324,7 +331,7 @@ deviceController.unregisterCharacteristicsNotifier = async function (req) {
         try {
             var service = await server.getPrimaryService(serviceId);
             var characteristic = await service.getCharacteristic(characteristicId);
-            
+
             //stop notificaitons and remove the event listener
             await characteristic.stopNotifications();
             characteristic.removeEventListener('characteristicvaluechanged', characteristicEventHandler);
@@ -338,4 +345,4 @@ deviceController.unregisterCharacteristicsNotifier = async function (req) {
     }
 }
 
-    module.exports = deviceController;
+module.exports = deviceController;
