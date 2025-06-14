@@ -1,16 +1,16 @@
 var express = require('express');
 var router = express.Router();
 var getAdapters = require('webbluetooth').getAdapters;
-
+var clientController = require('../controller/client');
 
 /* GET home page. */
 router.get('/adapters', async function(req, res, next) {
-  const adapters = await getAdapters();
-  console.log(adapters);
-  if (!adapters || adapters.length === 0) {
-    return res.status(404).json({"error": "No Bluetooth adapters found"});
+  var result = await clientController.getAdapter(req);
+  if (result) {
+    res.status(result.status || 200).json(result);
+  } else {
+    res.status(500).json({ "error": "Couldn't process request at this moment. Please retry later" });
   }
-  res.json({"res": adapters});
 });
 
 module.exports = router;

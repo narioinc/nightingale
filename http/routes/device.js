@@ -1,11 +1,12 @@
 var express = require('express');
 var router = express.Router();
-const webbluetooth = require('webbluetooth')
-const { v4: uuidv4 } = require('uuid');
 const deviceController = require('../controller/device');
 
 
-/* GET home page. */
+
+/******************************************
+ * Devices
+ ******************************************/
 router.get('/', async function (req, res, next) {
   var result = await deviceController.getDevice(req);
   if (result) {
@@ -24,6 +25,10 @@ router.get('/request', async function (req, res, next) {
     res.status(500).json({ "error": "Couldn't process request at this moment. Please retry later" });
   }
 });
+
+
+
+
 
 /******************************************
  * GATT Services
