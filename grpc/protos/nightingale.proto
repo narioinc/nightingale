@@ -14,22 +14,144 @@
 
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option java_multiple_files = true;
 option java_package = "com.narioinc.nightingale";
 option java_outer_classname = "Nightingale";
 option objc_class_prefix = "RTG";
 
-package nightingale;
+
+package nightingale.v1;
 
 // Interface exported by the server.
-service Nightingale {
-  rpc hello(HelloRequest) returns (HelloResponse) {}
+service NightingaleService {
+  rpc GetAvailability(google.protobuf.Empty) returns (AvailabilityResponse) {}
+  rpc GetDevices(google.protobuf.Empty) returns (DeviceResponse) {}
+  rpc RequestDevice(DeviceRequest) returns (DeviceResponse) {}
+
+  rpc GetPrimaryService(ServiceRequest) returns (BluetoothRemoteGATTService) {}
+  rpc GetPrimaryServices(ServiceRequest) returns (stream BluetoothRemoteGATTService) {}
+
+  rpc GetCharacteristic(CharacteristicRequest) returns (BluetoothRemoteGATTCharacteristic) {}
+  rpc GetCharacteristics(CharacteristicRequest) returns (stream BluetoothRemoteGATTCharacteristic) {}
+  rpc GetCharacteristicValue(CharacteristicRequest) returns (BluetoothRemoteGATTCharacteristic) {}
+  rpc WriteCharacteristicTextValue(CharacteristicTextWriteRequest) returns (BluetoothRemoteGATTCharacteristic) {}
+  rpc WriteCharacteristicValue(CharacteristicWriteRequest) returns (BluetoothRemoteGATTCharacteristic) {}
+  rpc NotifyText(CharacteristicNotifyRequest) returns (stream CharacteristicTextValue) {}
+  rpc Notify(CharacteristicNotifyRequest) returns (stream CharacteristicValue) {}
+  
+  rpc GetDescriptor(DescriptorRequest) returns (BluetoothRemoteGATTDescriptor) {}
+  rpc GetDescriptors(DescriptorRequest) returns (stream BluetoothRemoteGATTDescriptor) {}
+
+
 }
 
-message HelloRequest {
-  string name = 1;
+
+/*************************************
+* BLE Requests
+**************************************/
+message DeviceRequest {
+
 }
 
-message HelloResponse {
-  string message = 1;
+message ServiceRequest {
+  string session_id = 1;
+  optional string service_uuid = 2;
 }
+
+message CharacteristicRequest {
+  string session_id = 1;
+  string service_uuid = 2;
+  optional string characteristic_uuid = 3;
+}
+
+message DescriptorRequest {
+  string session_id = 1;
+  string service_uuid = 2;
+  string characteristic_uuid = 3;
+  optional string descriptor_uuid = 4;
+}
+
+message CharacteristicNotifyRequest {
+  string session_id = 1;
+  string service_uuid = 2;
+  string characteristic_uuid = 3;
+}
+
+message CharacteristicTextWriteRequest {
+  string session_id = 1;
+  string service_uuid = 2;
+  string characteristic_uuid = 3;
+  string value = 4; // The text value to write
+}
+
+message CharacteristicWriteRequest {
+  string session_id = 1;
+  string service_uuid = 2;
+  string characteristic_uuid = 3;
+  bytes value = 4; // The binary value to write
+}
+
+
+
+/************************************
+* BLE Responses
+************************************/
+
+
+//returns a boolean indicating whether the device is available
+message AvailabilityResponse {
+  bool available = 1;
+}
+
+message DeviceResponse {
+  repeated BluetoothDevice devices = 1;
+}
+
+/*****************************************
+* Library messages
+******************************************/
+
+message BluetoothDevice {
+  string device_id = 1;
+  string device_name = 2;
+}
+
+message BluetoothRemoteGATTServer {
+  bool connected = 1;
+}
+
+message BluetoothRemoteGATTService {
+  string uuid = 1;
+  bool primary = 2;
+}
+message BluetoothRemoteGATTDescriptor {
+  string uuid = 1;
+  string value = 2;
+}
+
+message BluetoothRemoteGATTCharacteristic {
+  string uuid = 1;
+  string value = 2;
+  repeated BluetoothCharacteristicProperties properties =3;
+}
+
+message BluetoothCharacteristicProperties {
+  bool broadcast = 1;
+  bool read = 2;
+  bool write_without_response = 3;
+  bool write = 4;
+  bool notify = 5;
+  bool indicate = 6;
+  bool authenticated_signed_writes = 7;
+  bool reliable_write = 8;
+  bool writable_auxiliaries = 9;
+}
+
+message CharacteristicTextValue {
+  string value = 1;
+}
+
+message CharacteristicValue {}
+
